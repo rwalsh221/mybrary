@@ -1,1 +1,3 @@
-# e_m_adv_server
+# mybrary project
+
+https://www.youtube.com/watch?v=esy4nRuShl8&list=PLZlA0Gpn_vH8jbFkBjOuFjhxANC63OmXM&index=6
