@@ -6,6 +6,8 @@ const fs = require('fs');
 const Book = require('../models/book');
 const Author = require('../models/author');
 const { response } = require('express');
+const req = require('express/lib/request');
+const res = require('express/lib/response');
 const uploadPath = path.join('public', Book.coverImageBasePath);
 const imageMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
 
@@ -24,10 +26,10 @@ const renderNewPage = async (response, book, hasError = false) => {
       book: book,
     };
     if (hasError) params.errorMessage = 'Error creating new book';
-    response.render('bookz/new', params);
+    response.render('books/new', params);
   } catch (err) {
     console.error(err.message);
-    response.redirect('/bookz');
+    response.redirect('/books');
   }
 };
 
@@ -44,7 +46,36 @@ const removeBookCover = (fileName) => {
 
 // ALL BOOKS ROUTE
 router.get('/', async (request, response) => {
-  response.send('all books');
+  let query = Book.find();
+  // SEARCH TITLE
+  if (request.query.title != null && request.query.title != '') {
+    query = query.regex('title', new RegExp(request.query.title, 'i'));
+  }
+  // SEARCH PUBLISHED BEFORE
+  if (
+    request.query.publishedBefore != null &&
+    request.query.publishedBefore != ''
+  ) {
+    // lte = less  than or equal
+    query = query.lte('publishDate', request.query.publishedBefore);
+  }
+  // SEARCH PUBLISHED AFTER
+  if (
+    request.query.publishedAfter != null &&
+    request.query.publishedAfter != ''
+  ) {
+    // lte = less  than or equal
+    query = query.gte('publishDate', request.query.publishedAfter);
+  }
+  try {
+    const books = await query.exec();
+    response.render('books/index', {
+      books: books,
+      searchOptions: request.query,
+    });
+  } catch {
+    res.redirect('/');
+  }
 });
 
 // NEW BOOK ROUTE
@@ -66,8 +97,8 @@ router.post('/', upload.single('cover'), async (request, response) => {
   });
   try {
     const newBook = await book.save();
-    // response.redirect(`bookz/${newBookz.id}`);
-    response.redirect('bookz');
+    // response.redirect(`books/${newbooks.id}`);
+    response.redirect('books');
   } catch {
     if (book.coverImageName != null) {
       removeBookCover(book.coverImageName);
